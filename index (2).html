@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Faizan Shahid — Chemical Engineer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #0D0F14;
+      --bg2:    #12151C;
+      --bg3:    #181C25;
+      --line:   rgba(255,255,255,0.07);
+      --text:   #E8EAF0;
+      --muted:  #7A8190;
+      --accent: #5ECFB1;
+      --accent2:#F0C060;
+    }
+
+    html { scroll-behavior: auto; } /* we handle scrolling manually */
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      line-height: 1.7;
+      overflow: hidden;           /* hide native scroll bar */
+      height: 100vh;
+    }
+
+    /* ── NOISE ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── PERSPECTIVE STAGE ──
+       All sections sit inside this container.
+       The container scrolls vertically via JS-driven translateY,
+       and perspective lets us push sections back in Z.          */
+    #stage-wrap {
+      position: fixed;
+      inset: 0;
+      perspective: 1200px;
+      perspective-origin: 50% 40%;
+      overflow: hidden;
+    }
+
+    #stage {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      will-change: transform;
+      transform-style: preserve-3d;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 4rem;
+      border-bottom: 1px solid transparent;
+      transition: background 0.5s, border-color 0.5s;
+      pointer-events: all;
+    }
+    nav.scrolled {
+      background: rgba(13,15,20,0.9);
+      backdrop-filter: blur(18px);
+      border-color: var(--line);
+    }
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+    .nav-links { display: flex; gap: 2.5rem; }
+    .nav-links a {
+      text-decoration: none;
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      text-transform: uppercase;
+      transition: color 0.2s;
+      cursor: pointer;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── SCROLL PROGRESS BAR ── */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: var(--accent);
+      width: 0%;
+      z-index: 300;
+      transition: width 0.05s linear;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    /* ── SECTIONS ──
+       Each section is full-viewport-height.
+       The depth effect is applied via JS by setting
+       transform-style and individual transforms.        */
+    section {
+      width: 100%;
+      min-height: 100vh;
+      padding: 7rem 4rem;
+      position: relative;
+      transform-origin: 50% 0%;
+      will-change: transform, opacity;
+      overflow: hidden;
+    }
+
+    #hero { padding: 8rem 4rem 4rem; }
+    #about  { background: var(--bg2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    #experience { background: var(--bg); }
+    #projects   { background: var(--bg2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    #fyp        { background: var(--bg); }
+    #education  { background: var(--bg2); border-top: 1px solid var(--line); }
+    #achievements { background: var(--bg); }
+    #contact    { background: var(--bg2); border-top: 1px solid var(--line); text-align: center; }
+
+    /* ── HERO ── */
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+      animation: gridShift 20s linear infinite;
+    }
+    @keyframes gridShift {
+      from { background-position: 0 0, 0 0; }
+      to   { background-position: 0 60px, 60px 0; }
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .orb1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(94,207,177,0.14), transparent 70%);
+      top: -100px; right: 5%;
+    }
+    .orb2 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(240,192,96,0.09), transparent 70%);
+      bottom: 10%; left: 10%;
+    }
+    .hero-content { position: relative; max-width: 900px; }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.14em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.7s 0.2s both;
+    }
+    .hero-eyebrow::before { content:''; display:block; width:28px; height:1px; background:var(--accent); }
+    h1.display {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(3rem, 7vw, 6.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.7s 0.4s both;
+    }
+    h1.display em { font-style: italic; color: var(--accent); }
+    .hero-desc {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.8;
+      margin-bottom: 2.5rem;
+      animation: fadeInUp 0.7s 0.6s both;
+    }
+    .hero-stats {
+      display: flex; gap: 3rem; margin-bottom: 3rem;
+      animation: fadeInUp 0.7s 0.8s both;
+    }
+    .stat-item { display: flex; flex-direction: column; }
+    .stat-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.2rem; color: var(--text); line-height: 1;
+    }
+    .stat-num span { color: var(--accent); }
+    .stat-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem; letter-spacing: 0.1em;
+      color: var(--muted); text-transform: uppercase; margin-top: 0.25rem;
+    }
+    .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; animation: fadeInUp 0.7s 1s both; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.8rem 1.8rem; border-radius: 4px;
+      font-size: 0.82rem; font-weight: 500; letter-spacing: 0.05em;
+      text-decoration: none; cursor: pointer; transition: all 0.25s;
+    }
+    .btn-primary { background: var(--accent); color: #0D0F14; border: 1px solid var(--accent); }
+    .btn-primary:hover { background: transparent; color: var(--accent); }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .scroll-hint {
+      position: absolute; bottom: 2.5rem; left: 4rem;
+      display: flex; align-items: center; gap: 0.75rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+      letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase;
+      animation: fadeInUp 1s 1.5s both;
+    }
+    .scroll-line {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%,100% { transform: scaleY(1); opacity: 1; }
+      50%      { transform: scaleY(0.4); opacity: 0.4; }
+    }
+
+    /* ── SECTION LABELS ── */
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; letter-spacing: 0.14em;
+      color: var(--accent); text-transform: uppercase;
+      margin-bottom: 0.8rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .section-label::after { content:''; flex:1; max-width:40px; height:1px; background:var(--accent); }
+    h2.section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1.1; margin-bottom: 1rem;
+    }
+    h2.section-title em { font-style: italic; color: var(--accent); }
+    .section-sub { font-size: 0.95rem; color: var(--muted); max-width: 520px; margin-bottom: 4rem; }
+
+    /* ── ABOUT ── */
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; }
+    .about-text p { color: var(--muted); line-height: 1.9; margin-bottom: 1.2rem; font-size: 0.95rem; }
+    .about-text p strong { color: var(--text); font-weight: 500; }
+    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .skill-chip {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.6rem 0.9rem; background: var(--bg3);
+      border: 1px solid var(--line); border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      letter-spacing: 0.04em; color: var(--muted);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .skill-chip:hover { border-color: var(--accent); color: var(--text); }
+    .skill-chip::before { content:'▸'; color: var(--accent); font-size: 0.6rem; }
+
+    /* ── TIMELINE ── */
+    .timeline { position: relative; }
+    .timeline::before {
+      content:''; position:absolute; left:0; top:0; bottom:0;
+      width:1px; background:linear-gradient(to bottom, var(--accent), var(--line), transparent);
+    }
+    .timeline-item { padding-left: 2.5rem; padding-bottom: 3.5rem; position: relative; }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-dot {
+      position:absolute; left:-5px; top:6px;
+      width:11px; height:11px; border-radius:50%;
+      background:var(--accent); box-shadow:0 0 12px rgba(94,207,177,0.5);
+    }
+    .timeline-meta { display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem; }
+    .timeline-date {
+      font-family:'JetBrains Mono',monospace; font-size:0.7rem;
+      letter-spacing:0.1em; color:var(--accent); text-transform:uppercase;
+    }
+    .timeline-badge {
+      font-family:'JetBrains Mono',monospace; font-size:0.65rem;
+      padding:0.2rem 0.6rem; border:1px solid var(--accent2);
+      color:var(--accent2); border-radius:3px; letter-spacing:0.06em;
+    }
+    .timeline-role { font-family:'DM Serif Display',serif; font-size:1.4rem; color:var(--text); margin-bottom:0.2rem; }
+    .timeline-company { font-size:0.85rem; color:var(--muted); margin-bottom:1rem; font-weight:500; }
+    .timeline-points { list-style:none; display:flex; flex-direction:column; gap:0.45rem; }
+    .timeline-points li { font-size:0.88rem; color:var(--muted); display:flex; gap:0.7rem; }
+    .timeline-points li::before { content:'→'; color:var(--accent); flex-shrink:0; font-size:0.75rem; margin-top:0.15rem; }
+
+    /* ── PROJECTS ── */
+    .projects-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr));
+      gap: 1.5px; background: var(--line); border: 1px solid var(--line);
+    }
+    .project-card {
+      background: var(--bg2); padding: 2rem;
+      display: flex; flex-direction: column;
+      transition: background 0.2s;
+    }
+    .project-card:hover { background: var(--bg3); }
+    .project-number { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:rgba(94,207,177,0.4); letter-spacing:0.1em; margin-bottom:1rem; }
+    .project-title { font-family:'DM Serif Display',serif; font-size:1.15rem; color:var(--text); margin-bottom:0.75rem; line-height:1.3; }
+    .project-desc { font-size:0.84rem; color:var(--muted); line-height:1.75; flex:1; margin-bottom:1.2rem; }
+    .project-tags { display:flex; flex-wrap:wrap; gap:0.4rem; }
+    .tag {
+      font-family:'JetBrains Mono',monospace; font-size:0.64rem;
+      padding:0.2rem 0.55rem; background:var(--bg); border:1px solid var(--line);
+      border-radius:3px; color:var(--muted); letter-spacing:0.04em;
+    }
+
+    /* ── FYP ── */
+    .fyp-inner {
+      border:1px solid var(--line); border-radius:6px; overflow:hidden;
+      display:grid; grid-template-columns:1fr 1fr;
+    }
+    .fyp-left { padding:3.5rem; background:var(--bg2); }
+    .fyp-right { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--line); }
+    .fyp-metric { background:var(--bg3); padding:1.5rem; display:flex; flex-direction:column; }
+    .fyp-metric-val { font-family:'DM Serif Display',serif; font-size:2rem; color:var(--text); line-height:1; margin-bottom:0.3rem; }
+    .fyp-metric-val span { color:var(--accent); }
+    .fyp-metric-label { font-family:'JetBrains Mono',monospace; font-size:0.65rem; letter-spacing:0.08em; color:var(--muted); text-transform:uppercase; }
+    .fyp-left p { color:var(--muted); font-size:0.9rem; line-height:1.85; margin-bottom:1rem; }
+
+    /* ── EDUCATION ── */
+    .edu-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    .edu-card { border:1px solid var(--line); padding:2rem; border-radius:4px; transition:border-color 0.2s; }
+    .edu-card:hover { border-color:var(--accent); }
+    .edu-year { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--accent); letter-spacing:0.1em; margin-bottom:0.75rem; }
+    .edu-degree { font-family:'DM Serif Display',serif; font-size:1.2rem; margin-bottom:0.3rem; }
+    .edu-school { font-size:0.85rem; color:var(--muted); margin-bottom:0.75rem; }
+    .edu-grade { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:0.7rem; padding:0.25rem 0.7rem; border:1px solid rgba(94,207,177,0.3); color:var(--accent); border-radius:3px; }
+
+    /* ── ACHIEVEMENTS ── */
+    .ach-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:1rem; }
+    .ach-item {
+      display:flex; gap:1rem; padding:1.25rem;
+      border:1px solid var(--line); border-radius:4px;
+      align-items:flex-start; transition:border-color 0.2s;
+    }
+    .ach-item:hover { border-color:var(--accent2); }
+    .ach-icon { font-size:1.1rem; flex-shrink:0; margin-top:0.1rem; }
+    .ach-text { font-size:0.87rem; color:var(--muted); line-height:1.6; }
+    .ach-text strong { color:var(--text); font-weight:500; display:block; margin-bottom:0.2rem; }
+
+    /* ── CONTACT ── */
+    #contact .section-label { justify-content:center; }
+    #contact .section-label::after { display:none; }
+    #contact .section-label::before { content:''; flex:0; max-width:40px; height:1px; background:var(--accent); }
+    .contact-links { display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; margin-top:2.5rem; }
+    .contact-link {
+      display:inline-flex; align-items:center; gap:0.5rem;
+      padding:0.75rem 1.5rem; border:1px solid var(--line); border-radius:4px;
+      color:var(--muted); text-decoration:none;
+      font-size:0.83rem; font-family:'JetBrains Mono',monospace; letter-spacing:0.04em;
+      transition:all 0.2s;
+    }
+    .contact-link:hover { border-color:var(--accent); color:var(--accent); }
+
+    /* ── FOOTER ── */
+    footer {
+      background:var(--bg); border-top:1px solid var(--line);
+      padding:2rem 4rem; display:flex;
+      justify-content:space-between; align-items:center;
+      font-family:'JetBrains Mono',monospace; font-size:0.68rem;
+      letter-spacing:0.08em; color:var(--muted);
+    }
+
+    /* ── SECTION IN-VIEW CONTENT REVEALS ──
+       Child elements inside each section animate when
+       their section becomes active (class .in-view added by JS). */
+    .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.65s cubic-bezier(.22,1,.36,1), transform 0.65s cubic-bezier(.22,1,.36,1); }
+    section.in-view .reveal { opacity: 1; transform: none; }
+    section.in-view .reveal:nth-child(1)  { transition-delay: 0.05s; }
+    section.in-view .reveal:nth-child(2)  { transition-delay: 0.12s; }
+    section.in-view .reveal:nth-child(3)  { transition-delay: 0.19s; }
+    section.in-view .reveal:nth-child(4)  { transition-delay: 0.26s; }
+    section.in-view .reveal:nth-child(5)  { transition-delay: 0.33s; }
+    section.in-view .reveal:nth-child(6)  { transition-delay: 0.40s; }
+    section.in-view .reveal:nth-child(7)  { transition-delay: 0.47s; }
+    section.in-view .reveal:nth-child(8)  { transition-delay: 0.54s; }
+
+    /* ── HERO ENTRY ── */
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(22px); }
+      to   { opacity:1; transform:none; }
+    }
+
+    /* ── CUSTOM SCROLLBAR (visible on #stage-wrap) ── */
+    #scrollbar {
+      position: fixed;
+      right: 10px; top: 50%; transform: translateY(-50%);
+      width: 2px; height: 120px;
+      background: var(--line);
+      border-radius: 2px;
+      z-index: 150;
+    }
+    #scrollbar-thumb {
+      width: 100%; border-radius: 2px;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      position: absolute; top: 0;
+      transition: height 0.1s, top 0.1s;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { gap: 1.5rem; }
+      section { padding: 5rem 1.5rem; }
+      #hero { padding: 7rem 1.5rem 4rem; }
+      .about-grid, .fyp-inner, .edu-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+      .hero-stats { gap: 2rem; }
+      .scroll-hint { left: 1.5rem; }
+      footer { flex-direction: column; gap: 0.5rem; text-align: center; padding: 1.5rem; }
+    }
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .projects-grid { grid-template-columns: 1fr; }
+      .hero-stats { flex-wrap: wrap; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- progress bar -->
+<div id="progress-bar"></div>
+
+<!-- custom scrollbar -->
+<div id="scrollbar"><div id="scrollbar-thumb"></div></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo">FS // Engineer</div>
+  <div class="nav-links">
+    <a onclick="scrollToSection(0)">About</a>
+    <a onclick="scrollToSection(1)">Experience</a>
+    <a onclick="scrollToSection(2)">Projects</a>
+    <a onclick="scrollToSection(3)">Thesis</a>
+    <a onclick="scrollToSection(7)">Contact</a>
+  </div>
+</nav>
+
+<!-- PERSPECTIVE STAGE -->
+<div id="stage-wrap">
+<div id="stage">
+
+<!-- ─── HERO ─── -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Chemical Engineer · Pakistan</div>
+    <h1 class="display">Faizan<br><em>Shahid</em></h1>
+    <p class="hero-desc">Shift Engineer at Fatima Fertilizers, specialising in process design, simulation, and plant operations. Turning complex chemical systems into reliable, optimised production.</p>
+    <div class="hero-stats">
+      <div class="stat-item"><span class="stat-num">3.55<span>/4</span></span><span class="stat-label">CGPA · NUST</span></div>
+      <div class="stat-item"><span class="stat-num">2<span>×</span></span><span class="stat-label">Dean's List</span></div>
+      <div class="stat-item"><span class="stat-num">400<span>K</span></span><span class="stat-label">TPY Thesis Plant</span></div>
+      <div class="stat-item"><span class="stat-num">4.2<span>yr</span></span><span class="stat-label">Projected Payback</span></div>
+    </div>
+    <div class="hero-cta">
+      <a href="Faizan_Shahid_CV.pdf" download class="btn btn-primary">↓ Download CV</a>
+      <a onclick="scrollToSection(2)" class="btn btn-ghost">View Projects</a>
+    </div>
+  </div>
+  <div class="scroll-hint"><div class="scroll-line"></div>Scroll</div>
+</section>
+
+<!-- ─── ABOUT ─── -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-text">
+      <div class="section-label reveal">About</div>
+      <h2 class="section-title reveal">Process-driven.<br><em>Detail-obsessed.</em></h2>
+      <p class="reveal">I'm a Chemical Engineer from <strong>NUST Islamabad</strong>, currently working as a <strong>Shift Engineer at Fatima Fertilizers</strong> in Multan, managing operations at a Calcium Ammonium Nitrate plant.</p>
+      <p class="reveal">My work spans process control, thermodynamic sizing, HAZOP studies, and equipment design. I led the installation of 20+ steam traps, specified ETFE polymer lining to extend equipment life by a decade, and manage daily production performance across high-pressure, high-temperature environments.</p>
+      <p class="reveal">My final-year thesis — a 400,000 TPY PTA purification plant — involved Aspen HYSYS/Plus simulation, detailed equipment design, and full economic analysis projecting a 4.2-year payback.</p>
+    </div>
+    <div>
+      <p class="reveal" style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;color:var(--accent);text-transform:uppercase;margin-bottom:1rem;">Technical Stack</p>
+      <div class="skills-grid reveal">
+        <div class="skill-chip">Aspen HYSYS</div><div class="skill-chip">Aspen Plus</div>
+        <div class="skill-chip">MATLAB/Simulink</div><div class="skill-chip">AutoCAD</div>
+        <div class="skill-chip">Ansys Fluent</div><div class="skill-chip">Ansys Workbench</div>
+        <div class="skill-chip">Python</div><div class="skill-chip">HAZOP Analysis</div>
+        <div class="skill-chip">CFD Simulation</div><div class="skill-chip">PFD / P&ID Design</div>
+        <div class="skill-chip">Permit to Work</div><div class="skill-chip">Risk Assessment</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── EXPERIENCE ─── -->
+<section id="experience">
+  <div class="section-label reveal">Experience</div>
+  <h2 class="section-title reveal">Where I've <em>worked</em></h2>
+  <p class="section-sub reveal">Building operational expertise in fertilizer manufacturing and process engineering.</p>
+  <div class="timeline">
+    <div class="timeline-item reveal">
+      <div class="timeline-dot"></div>
+      <div class="timeline-meta"><span class="timeline-date">Jul 2025 – Present</span><span class="timeline-badge">Current</span></div>
+      <div class="timeline-role">Shift Engineer</div>
+      <div class="timeline-company">Fatima Fertilizers Limited · Multan, Pakistan</div>
+      <ul class="timeline-points">
+        <li>Manage production at Calcium Ammonium Nitrate plant, ensuring safety, environmental, and quality compliance.</li>
+        <li>Lead troubleshooting of process disruptions, minimising downtime and improving operational stability.</li>
+        <li>Produce daily performance reports and analyses driving process optimisation decisions.</li>
+        <li>Coordinate with maintenance, project, and planning teams to resolve bottlenecks and execute shutdowns.</li>
+      </ul>
+    </div>
+    <div class="timeline-item reveal">
+      <div class="timeline-dot"></div>
+      <div class="timeline-meta"><span class="timeline-date">Jul 2024 – Jul 2025</span></div>
+      <div class="timeline-role">Graduate Trainee Engineer</div>
+      <div class="timeline-company">Fatima Fertilizers Limited · Multan, Pakistan</div>
+      <ul class="timeline-points">
+        <li>Completed structured rotations across major plant sections: process control, instrumentation, and equipment performance.</li>
+        <li>Conducted energy, efficiency, and quality monitoring; proposed operating adjustments under senior supervision.</li>
+        <li>Participated in PSSR reviews, safety audits, and compliance checks across multiple units.</li>
+        <li>Assisted in optimisation projects targeting pressure balance, utility loads, and process stability.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PROJECTS ─── -->
+<section id="projects">
+  <div class="section-label reveal">Projects</div>
+  <h2 class="section-title reveal">Engineering <em>highlights</em></h2>
+  <p class="section-sub reveal">A selection of technical work across simulation, design, and plant operations.</p>
+  <div class="projects-grid">
+    <div class="project-card reveal"><div class="project-number">01 — Plant Engineering</div><div class="project-title">ETFE Polymer Lining for HF Fume Corrosion Mitigation</div><p class="project-desc">Identified HF vapor-induced localised corrosion in stainless steel tanks. Specified ETFE lining for headspace region, extending equipment life by an estimated 10 years and saving ~USD 50,000 annually.</p><div class="project-tags"><span class="tag">Corrosion Engineering</span><span class="tag">Material Selection</span><span class="tag">ETFE</span></div></div>
+    <div class="project-card reveal"><div class="project-number">02 — Operations</div><div class="project-title">Management of Change: Steam Trap Installation</div><p class="project-desc">Led MoC for installation of 20+ steam traps across the plant. Conducted thermodynamic sizing of trap types (thermodynamic, inverted bucket). Executed PSSR and HAZOP actions with safe tie-in during shutdown.</p><div class="project-tags"><span class="tag">MOC</span><span class="tag">PSSR</span><span class="tag">HAZOP</span><span class="tag">Thermodynamics</span></div></div>
+    <div class="project-card reveal"><div class="project-number">03 — Simulation</div><div class="project-title">Methanol Plant from CO₂ Hydrogenation</div><p class="project-desc">Modelled catalytic conversion of CO₂ from coal power plant flue gas into methanol using Aspen Plus, integrating a chemical absorption capture unit. Parameter optimisation reduced CO₂ intensity by 1.6 t/t methanol.</p><div class="project-tags"><span class="tag">Aspen Plus</span><span class="tag">CO₂ Capture</span><span class="tag">Green Chemistry</span></div></div>
+    <div class="project-card reveal"><div class="project-number">04 — Control Systems</div><div class="project-title">Simulink Temperature Control System</div><p class="project-desc">Developed a closed-loop control system in Simulink for an EDIBON temperature control unit. Tuned P, PI, and PID controllers, analysing system response and comparing performance improvements.</p><div class="project-tags"><span class="tag">MATLAB</span><span class="tag">Simulink</span><span class="tag">PID Control</span></div></div>
+    <div class="project-card reveal"><div class="project-number">05 — CFD</div><div class="project-title">Multiphase Flow in Fluidised Bed Reactors</div><p class="project-desc">Generated mesh for various vessel geometries using Gambit. Simulated gas-solid integrations and segregation profiles in fluidised bed reactors using Ansys Fluent. Performed post-processing analysis on simulation models.</p><div class="project-tags"><span class="tag">Ansys Fluent</span><span class="tag">CFD</span><span class="tag">Gambit</span><span class="tag">Multiphase Flow</span></div></div>
+    <div class="project-card reveal"><div class="project-number">06 — Design</div><div class="project-title">PTA Purification Plant — FYP</div><p class="project-desc">Designed a 400,000 TPY Crude Terephthalic Acid purification plant with full PFD/P&ID, Aspen simulation, equipment design, and economic analysis. Achieved 99.99% purity with 4.2-year payback.</p><div class="project-tags"><span class="tag">Process Design</span><span class="tag">Aspen HYSYS</span><span class="tag">Economics</span></div></div>
+  </div>
+</section>
+
+<!-- ─── FYP ─── -->
+<section id="fyp">
+  <div class="section-label reveal">Featured Thesis</div>
+  <h2 class="section-title reveal" style="margin-bottom:2.5rem;">400,000 TPY PTA<br><em>Purification Plant</em></h2>
+  <div class="fyp-inner reveal">
+    <div class="fyp-left">
+      <p>Designed a parallel PTA purification plant for <strong>Lotte Chemicals Pakistan Ltd.</strong>, processing an additional 1,095 tonnes of Crude Terephthalic Acid per day to resolve a production bottleneck.</p>
+      <p>The design spans a packed-bed reactor with palladium/carbon catalyst, five flash crystallisers, a centrifuge, and a steam-tube rotary dryer — achieving 99.99% purity from a starting 99.7%.</p>
+      <p>Reactor and crystalliser units were modelled in <strong>Aspen HYSYS and Aspen Plus</strong>. Heat exchanger geometry was validated with Aspen EDR. A full HAZOP study was conducted on the reactor node.</p>
+      <p>The economic analysis projects a payback period of <strong>2.9 years</strong> at a product price of $1,250/tonne.</p>
+    </div>
+    <div class="fyp-right">
+      <div class="fyp-metric"><div class="fyp-metric-val">99.99<span>%</span></div><div class="fyp-metric-label">PTA Purity</div></div>
+      <div class="fyp-metric"><div class="fyp-metric-val">400<span>K</span></div><div class="fyp-metric-label">Tonnes/Year</div></div>
+      <div class="fyp-metric"><div class="fyp-metric-val">$11.4<span>M</span></div><div class="fyp-metric-label">Total Investment</div></div>
+      <div class="fyp-metric"><div class="fyp-metric-val">2.9<span>yr</span></div><div class="fyp-metric-label">Payback Period</div></div>
+      <div class="fyp-metric"><div class="fyp-metric-val">$500<span>M</span></div><div class="fyp-metric-label">Annual Revenue</div></div>
+      <div class="fyp-metric"><div class="fyp-metric-val">21.6<span>t</span></div><div class="fyp-metric-label">Catalyst (Pd/C)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── EDUCATION ─── -->
+<section id="education">
+  <div class="section-label reveal">Education</div>
+  <h2 class="section-title reveal">Academic <em>foundation</em></h2>
+  <div class="edu-grid" style="margin-top:3rem;">
+    <div class="edu-card reveal"><div class="edu-year">2020 — 2024</div><div class="edu-degree">B.E. Chemical Engineering</div><div class="edu-school">National University of Sciences and Technology (NUST) · Islamabad</div><span class="edu-grade">CGPA 3.55 / 4.00</span></div>
+    <div class="edu-card reveal"><div class="edu-year">2017 — 2019</div><div class="edu-degree">Higher Secondary (Intermediate)</div><div class="edu-school">Army Public College · Kharian</div><span class="edu-grade">Grade A1</span></div>
+  </div>
+</section>
+
+<!-- ─── ACHIEVEMENTS ─── -->
+<section id="achievements">
+  <div class="section-label reveal">Recognition</div>
+  <h2 class="section-title reveal">Awards & <em>achievements</em></h2>
+  <div class="ach-list" style="margin-top:3rem;">
+    <div class="ach-item reveal"><span class="ach-icon">🎓</span><div class="ach-text"><strong>Dean's List — Twice</strong>Achieved academic excellence twice during undergraduate studies at NUST.</div></div>
+    <div class="ach-item reveal"><span class="ach-icon">🏅</span><div class="ach-text"><strong>Shaan-e-Aziz Award</strong>Regional award for academic excellence in college board examinations.</div></div>
+    <div class="ach-item reveal"><span class="ach-icon">🥉</span><div class="ach-text"><strong>High Achievers Award</strong>3rd position in school board exams.</div></div>
+    <div class="ach-item reveal"><span class="ach-icon">⚗️</span><div class="ach-text"><strong>Machine Learning Cert.</strong>Coursera-certified, May 2024.</div></div>
+    <div class="ach-item reveal"><span class="ach-icon">🤝</span><div class="ach-text"><strong>Amal Academy Fellow</strong>Career Prep Fellowship — led a nationwide webinar on stress management for 100+ students.</div></div>
+    <div class="ach-item reveal"><span class="ach-icon">⚽</span><div class="ach-text"><strong>Ramzan Football Champion</strong>Winner of the Ramzan Football Championship 2025 at Fatima Fertilizers.</div></div>
+    <div class="ach-item reveal"><span class="ach-icon">🏏</span><div class="ach-text"><strong>NUST Cricket Champion</strong>Champion of the NUST Inter-department Cricket Tournament with SCME.</div></div>
+    <div class="ach-item reveal"><span class="ach-icon">🩸</span><div class="ach-text"><strong>Blood Drive Lead</strong>Organised company-wide Blood Donation Drive — 40+ hours coordinating 15 volunteers.</div></div>
+  </div>
+</section>
+
+<!-- ─── CONTACT ─── -->
+<section id="contact">
+  <div class="section-label reveal">Contact</div>
+  <h2 class="section-title reveal" style="margin-bottom:0.75rem;">Let's <em>connect</em></h2>
+  <p class="reveal" style="color:var(--muted);font-size:0.95rem;">Open to opportunities in process engineering, simulation, and plant operations.</p>
+  <div class="contact-links reveal">
+    <a href="mailto:faizan.shahid.3328@gmail.com" class="contact-link">✉ faizan.shahid.3328@gmail.com</a>
+    <a href="https://www.linkedin.com/in/faizan03/" target="_blank" rel="noopener" class="contact-link">↗ LinkedIn</a>
+    <a href="tel:+923337100534" class="contact-link">☎ +92 333 710 0534</a>
+    <a href="Faizan_Shahid_CV.pdf" download class="contact-link">↓ Download CV (PDF)</a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer class="reveal">
+  <span>© 2025 Faizan Shahid — Chemical Engineer</span>
+  <span>Islamabad / Multan, Pakistan</span>
+</footer>
+
+</div><!-- #stage -->
+</div><!-- #stage-wrap -->
+
+<script>
+/* ═══════════════════════════════════════════════
+   DEPTH SCROLL ENGINE
+   ─────────────────────────────────────────────
+   • Native scroll is disabled on body
+   • We intercept wheel + touch events and
+     drive a smooth target scroll value
+   • Each section is transformed with:
+       - scale(shrink) + translateZ(-depth)
+         as it exits upward  → pushes INTO screen
+       - translateY(lift)
+         as it enters from below → rises up
+   • perspective on #stage-wrap gives the 3D illusion
+═══════════════════════════════════════════════ */
+
+const stage     = document.getElementById('stage');
+const wrap      = document.getElementById('stage-wrap');
+const navEl     = document.getElementById('nav');
+const progBar   = document.getElementById('progress-bar');
+const sbThumb   = document.getElementById('scrollbar-thumb');
+const sections  = Array.from(document.querySelectorAll('#stage section, #stage footer'));
+
+let scrollY     = 0;   // current smoothed scroll position
+let targetY     = 0;   // target scroll position
+let totalHeight = 0;   // total scrollable height
+
+const EASE      = 0.08;   // lerp factor — lower = silkier / slower catch-up
+const MAX_SCALE_DOWN = 0.88;   // how small a section shrinks as it exits
+const MAX_Z_PUSH     = -180;   // translateZ when fully exited (px, negative = away)
+const ENTER_LIFT     = 80;     // translateY when section is about to enter (px)
+
+/* ── measure total scroll height ── */
+function measure() {
+  totalHeight = stage.scrollHeight - window.innerHeight;
+}
+
+/* ── lerp ── */
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+/* ── clamp ── */
+function clamp(v, mn, mx) { return Math.min(Math.max(v, mn), mx); }
+
+/* ── main rAF loop ── */
+function loop() {
+  // smooth scroll
+  scrollY = lerp(scrollY, targetY, EASE);
+  if (Math.abs(scrollY - targetY) < 0.3) scrollY = targetY;
+
+  // move the stage up
+  stage.style.transform = `translateY(${-scrollY}px)`;
+
+  // progress bar + nav
+  const prog = totalHeight > 0 ? scrollY / totalHeight : 0;
+  progBar.style.width = (prog * 100) + '%';
+  navEl.classList.toggle('scrolled', scrollY > 40);
+
+  // scrollbar thumb
+  const sbH = 120;
+  sbThumb.style.height = (sbH * 0.18) + 'px';
+  sbThumb.style.top    = (prog * sbH * 0.82) + 'px';
+
+  // per-section 3D depth transform
+  const vp = window.innerHeight;
+  sections.forEach(sec => {
+    const top    = sec.offsetTop;
+    const height = sec.offsetHeight;
+
+    // how far the section has scrolled above the viewport top
+    // negative: hasn't arrived yet;  positive: has started scrolling off
+    const scrolledPast = scrollY - top;
+    // 0 = section is at viewport top, 1 = fully scrolled off
+    const exitProg = clamp(scrolledPast / height, 0, 1);
+    // 0 = fully in view from below, 1 = at viewport top
+    const enterProg = clamp((scrollY + vp - top) / vp, 0, 1);
+
+    // ease curves
+    const exitEased  = exitProg  * exitProg;           // accelerate exit
+    const enterEased = 1 - Math.pow(1 - enterProg, 3); // decelerate entry
+
+    const scale      = lerp(1,  MAX_SCALE_DOWN, exitEased);
+    const tz         = lerp(0,  MAX_Z_PUSH,     exitEased);
+    const ty         = lerp(ENTER_LIFT, 0,      enterEased);
+    const opacity    = lerp(1,  0.4,            exitEased);
+
+    // only apply depth to sections that are scrolling out;
+    // entering sections just rise up normally
+    if (exitProg > 0 && exitProg < 1) {
+      sec.style.transform = `scale(${scale}) translateZ(${tz}px)`;
+      sec.style.opacity   = opacity;
+    } else if (enterProg < 1 && scrolledPast < 0) {
+      sec.style.transform = `translateY(${ty}px)`;
+      sec.style.opacity   = enterEased;
+    } else {
+      sec.style.transform = '';
+      sec.style.opacity   = '';
+    }
+
+    // add .in-view class when section is mostly visible
+    const inView = scrollY + vp * 0.55 > top && scrollY < top + height * 0.8;
+    sec.classList.toggle('in-view', inView);
+  });
+
+  requestAnimationFrame(loop);
+}
+
+/* ── wheel handler ── */
+window.addEventListener('wheel', e => {
+  e.preventDefault();
+  targetY = clamp(targetY + e.deltaY * 1.2, 0, totalHeight);
+}, { passive: false });
+
+/* ── touch handler ── */
+let touchStartY = 0;
+window.addEventListener('touchstart', e => {
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+window.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const dy = touchStartY - e.touches[0].clientY;
+  touchStartY = e.touches[0].clientY;
+  targetY = clamp(targetY + dy * 1.5, 0, totalHeight);
+}, { passive: false });
+
+/* ── keyboard nav ── */
+window.addEventListener('keydown', e => {
+  const step = window.innerHeight * 0.9;
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') targetY = clamp(targetY + step, 0, totalHeight);
+  if (e.key === 'ArrowUp'   || e.key === 'PageUp')   targetY = clamp(targetY - step, 0, totalHeight);
+  if (e.key === 'Home') targetY = 0;
+  if (e.key === 'End')  targetY = totalHeight;
+});
+
+/* ── nav jump-to-section ── */
+function scrollToSection(idx) {
+  if (sections[idx]) targetY = clamp(sections[idx].offsetTop, 0, totalHeight);
+}
+
+/* ── mouse parallax on orbs ── */
+const orb1 = document.querySelector('.orb1');
+const orb2 = document.querySelector('.orb2');
+let mx=0,my=0,ox1=0,oy1=0,ox2=0,oy2=0;
+document.addEventListener('mousemove', e => {
+  mx = (e.clientX / innerWidth  - 0.5) * 2;
+  my = (e.clientY / innerHeight - 0.5) * 2;
+});
+(function orbLoop(){
+  ox1 += (mx*24-ox1)*0.04; oy1 += (my*16-oy1)*0.04;
+  ox2 += (mx*-14-ox2)*0.03; oy2 += (my*-10-oy2)*0.03;
+  if(orb1) orb1.style.transform = `translate(${ox1}px,${oy1}px)`;
+  if(orb2) orb2.style.transform = `translate(${ox2}px,${oy2}px)`;
+  requestAnimationFrame(orbLoop);
+})();
+
+/* ── init ── */
+window.addEventListener('resize', measure);
+measure();
+loop();
+</script>
+</body>
+</html>
